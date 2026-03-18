@@ -4,7 +4,8 @@ pragma solidity ^0.8.19;
 import {Script} from "forge-std/Script.sol";
 import {Raffle} from "../src/Raffle.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
-import {Interaction, fundSubscription, addconsumers} from "./Interactions.s.sol";
+import {fundSubscription, addconsumers} from "./Interactions.s.sol";
+import {VRFCoordinatorV2_5Mock} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 contract DeployRaffle is Script {
     function run() external {
@@ -12,30 +13,25 @@ contract DeployRaffle is Script {
     }
 
     function deploycontractRaffle() public returns (Raffle, HelperConfig) {
+        vm.startBroadcast(); // deployer wallet owns EVERYTHING from here
         HelperConfig helperConfig = new HelperConfig();
-        addconsumers addConsumer = new addconsumers();
+
         HelperConfig.NetworkConfig memory networkConfig = helperConfig
             .getconfig();
-        //
-        if (networkConfig.subscriptionId == 0) {
-            Interaction interaction = new Interaction();
-            (
-                networkConfig.subscriptionId,
-                networkConfig.vrfCoordinator
-            ) = interaction.createsub(
-                networkConfig.vrfCoordinator,
-                networkConfig.account
-            );
 
-            fundSubscription fundSub = new fundSubscription();
-            fundSub.fundsub(
+        if (networkConfig.subscriptionId == 0) {
+            // Call createSubscription directly — deployer wallet becomes owner ✅
+            networkConfig.subscriptionId = VRFCoordinatorV2_5Mock(
+                networkConfig.vrfCoordinator
+            ).createSubscription();
+
+            new fundSubscription().fundsub(
                 networkConfig.vrfCoordinator,
                 networkConfig.subscriptionId,
-                networkConfig.LINK,
-                networkConfig.account
+                networkConfig.LINK
             );
         }
-        vm.startBroadcast(networkConfig.account);
+
         Raffle raffle = new Raffle(
             networkConfig.entranceFee,
             networkConfig.interval,
@@ -44,14 +40,15 @@ contract DeployRaffle is Script {
             networkConfig.keyHash,
             networkConfig.callbackGasLimit
         );
+
+        // deployer wallet is still broadcaster, so it's the sub owner ✅
+        VRFCoordinatorV2_5Mock(networkConfig.vrfCoordinator).addConsumer(
+            networkConfig.subscriptionId,
+            address(raffle)
+        );
+
         vm.stopBroadcast();
 
-        addConsumer.addconsumer(
-            address(raffle),
-            networkConfig.subscriptionId,
-            networkConfig.vrfCoordinator,
-            networkConfig.account
-        );
-        return (raffle, helperConfig); // Return the raffle and helperConfig instances
+        return (raffle, helperConfig);
     }
 }

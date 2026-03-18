@@ -7,28 +7,25 @@ import {LinkToken} from "../test/Mock/TestLink.sol";
 import {DevOpsTools} from "lib/foundry-devops/src/DevOpsTools.sol";
 
 contract Interaction is Script {
-    function createSubscriptionbyConifg() public returns (uint256, address,address) {
+    function createSubscriptionbyConifg() public returns (uint256, address) {
         // Create a new subscription
         // Add the consumer contract to the subscription
         // Fund the subscription with LINK tokens
         HelperConfig helperConfig = new HelperConfig();
         address vrfaddress = helperConfig.getconfig().vrfCoordinator;
-        address account = helperConfig.getconfig().account;
-        (uint256 subId, address vrfaddress1) = createsub(vrfaddress, account);
-        return (subId, vrfaddress1, account);
+
+        (uint256 subId, address vrfaddress1) = createsub(vrfaddress);
+        return (subId, vrfaddress1);
     }
 
-    function createsub(
-        address vrfaddress,
-        address account
-    ) public returns (uint256, address) {
-        vm.startBroadcast(account);
+    function createsub(address vrfaddress) public returns (uint256, address) {
+        // vm.startBroadcast();
         VRFCoordinatorV2_5Mock vrfCoordinator = VRFCoordinatorV2_5Mock(
             vrfaddress
         );
 
         uint256 subId = vrfCoordinator.createSubscription();
-        vm.stopBroadcast();
+        // vm.stopBroadcast();
 
         // Add the consumer contract to the subscription
         // Fund the subscription with LINK tokens
@@ -52,38 +49,36 @@ contract fundSubscription is Script {
         fundsub(
             helperConfig.getconfig().vrfCoordinator,
             helperConfig.getconfig().subscriptionId,
-            helperConfig.getconfig().LINK,
-            helperConfig.getconfig().account
+            helperConfig.getconfig().LINK
         );
     }
 
     function fundsub(
         address vrfCoordinator,
         uint256 subId,
-        address link,
-        address account
+        address link
     ) public {
         uint96 amount = 10 ether;
         if (block.chainid == 11155111) {
             console.log("Funding subscription on Sepolia...");
             // Implement the logic to fund the subscription on Sepolia
-            vm.startBroadcast();
+            // vm.startBroadcast();
             LinkToken linkToken = LinkToken(link);
             linkToken.transferAndCall(
                 vrfCoordinator,
                 amount,
                 abi.encode(subId)
             );
-            vm.stopBroadcast();
+            // vm.stopBroadcast();
         } else {
             console.log("Funding subscription on local network...");
             // Implement the logic to fund the subscription on a local network
-            vm.startBroadcast(account);
+            // vm.startBroadcast();
             VRFCoordinatorV2_5Mock vrfCoordinatorMock = VRFCoordinatorV2_5Mock(
                 vrfCoordinator
             );
             vrfCoordinatorMock.fundSubscription(subId, amount);
-            vm.stopBroadcast();
+            // vm.stopBroadcast();
         }
     }
 
@@ -98,26 +93,24 @@ contract addconsumers is Script {
         addconsumer(
             consumer,
             helperConfig.getconfig().subscriptionId,
-            helperConfig.getconfig().vrfCoordinator,
-            helperConfig.getconfig().account
+            helperConfig.getconfig().vrfCoordinator
         );
     }
 
     function addconsumer(
         address consumer,
         uint256 subId,
-        address vrfCoordinator,
-        address account
+        address vrfCoordinator
     ) public {
         console.log("Adding consumer to subscription...", consumer);
         console.log("VRF Coordinator: %s", vrfCoordinator);
         console.log("Subscription ID: %s", subId);
-        vm.startBroadcast(account);
+        // vm.startBroadcast();
         VRFCoordinatorV2_5Mock vrfCoordinatorMock = VRFCoordinatorV2_5Mock(
             vrfCoordinator
         );
         vrfCoordinatorMock.addConsumer(subId, consumer);
-        vm.stopBroadcast();
+        // vm.stopBroadcast();
     }
 
     function run() external {

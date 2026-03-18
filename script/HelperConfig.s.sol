@@ -15,6 +15,7 @@ contract HelperConfig is constansts, Script {
     uint96 public constant GAS_PRICE_LINK = 1e9; // 0.000000001 LINK per gas
     int256 public constant WEI_PER_UNIT_LINK = 1e18; // 1 LINK = 10^18 (18 decimals)
     error InvalidChainId(uint256 chainId);
+
     struct NetworkConfig {
         uint256 entranceFee;
         uint256 interval;
@@ -23,7 +24,6 @@ contract HelperConfig is constansts, Script {
         uint32 callbackGasLimit;
         uint256 subscriptionId;
         address LINK;
-        address account;
     }
     NetworkConfig public activeNetworkConfig;
     mapping(uint256 chainid => NetworkConfig) public networkConfigs;
@@ -48,8 +48,7 @@ contract HelperConfig is constansts, Script {
         return getConfigbychainid(block.chainid);
     }
 
-    function getSepoliaethconfig() public view returns (NetworkConfig memory) {
-    
+    function getSepoliaethconfig() public pure returns (NetworkConfig memory) {
         NetworkConfig memory SepoliaEthConfig = NetworkConfig({
             entranceFee: 0.01 ether,
             interval: 30,
@@ -57,8 +56,7 @@ contract HelperConfig is constansts, Script {
             keyHash: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
             callbackGasLimit: 100000,
             subscriptionId: 0,
-            LINK: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
-            account: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
+            LINK: 0x779877A7B0D9E8603169DdbD7836e478b4624789
         });
         return SepoliaEthConfig;
     }
@@ -67,14 +65,14 @@ contract HelperConfig is constansts, Script {
         if (activeNetworkConfig.vrfCoordinator != address(0)) {
             return activeNetworkConfig;
         }
-        vm.startBroadcast();
+        //vm.startBroadcast();
         VRFCoordinatorV2_5Mock mockVrfCoordinator = new VRFCoordinatorV2_5Mock(
             BASE_FEE,
             GAS_PRICE_LINK,
             WEI_PER_UNIT_LINK
         );
         LinkToken linkToken = new LinkToken();
-        vm.stopBroadcast();
+        //vm.stopBroadcast();
 
         activeNetworkConfig = NetworkConfig({
             entranceFee: 0.01 ether,
@@ -83,8 +81,7 @@ contract HelperConfig is constansts, Script {
             keyHash: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae,
             callbackGasLimit: 100000,
             subscriptionId: 0,
-            LINK: address(linkToken),
-            account: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38
+            LINK: address(linkToken)
         });
 
         return activeNetworkConfig;
