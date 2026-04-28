@@ -5,7 +5,9 @@ import {Script} from "forge-std/Script.sol";
 import {Raffle} from "../src/Raffle.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 import {fundSubscription, addconsumers} from "./Interactions.s.sol";
-import {VRFCoordinatorV2_5Mock} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {
+    VRFCoordinatorV2_5Mock
+} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 contract DeployRaffle is Script {
     function run() external {
@@ -16,20 +18,14 @@ contract DeployRaffle is Script {
         vm.startBroadcast(); // deployer wallet owns EVERYTHING from here
         HelperConfig helperConfig = new HelperConfig();
 
-        HelperConfig.NetworkConfig memory networkConfig = helperConfig
-            .getconfig();
+        HelperConfig.NetworkConfig memory networkConfig = helperConfig.getconfig();
 
         if (networkConfig.subscriptionId == 0) {
             // Call createSubscription directly — deployer wallet becomes owner ✅
-            networkConfig.subscriptionId = VRFCoordinatorV2_5Mock(
-                networkConfig.vrfCoordinator
-            ).createSubscription();
+            networkConfig.subscriptionId = VRFCoordinatorV2_5Mock(networkConfig.vrfCoordinator).createSubscription();
 
-            new fundSubscription().fundsub(
-                networkConfig.vrfCoordinator,
-                networkConfig.subscriptionId,
-                networkConfig.LINK
-            );
+            new fundSubscription()
+                .fundsub(networkConfig.vrfCoordinator, networkConfig.subscriptionId, networkConfig.LINK);
         }
 
         Raffle raffle = new Raffle(
@@ -42,10 +38,7 @@ contract DeployRaffle is Script {
         );
 
         // deployer wallet is still broadcaster, so it's the sub owner ✅
-        VRFCoordinatorV2_5Mock(networkConfig.vrfCoordinator).addConsumer(
-            networkConfig.subscriptionId,
-            address(raffle)
-        );
+        VRFCoordinatorV2_5Mock(networkConfig.vrfCoordinator).addConsumer(networkConfig.subscriptionId, address(raffle));
 
         vm.stopBroadcast();
 

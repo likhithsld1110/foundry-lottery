@@ -2,7 +2,9 @@
 pragma solidity ^0.8.19;
 import {Script} from "forge-std/Script.sol";
 import {Raffle} from "../src/Raffle.sol";
-import {VRFCoordinatorV2_5Mock} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {
+    VRFCoordinatorV2_5Mock
+} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 import {LinkToken} from "../test/Mock/TestLink.sol";
 
 abstract contract constansts {
@@ -32,9 +34,7 @@ contract HelperConfig is constansts, Script {
         networkConfigs[SEPOLIA_ID] = getSepoliaethconfig();
     }
 
-    function getConfigbychainid(
-        uint256 chainid
-    ) public returns (NetworkConfig memory) {
+    function getConfigbychainid(uint256 chainid) public returns (NetworkConfig memory) {
         if (networkConfigs[chainid].vrfCoordinator != address(0)) {
             return networkConfigs[chainid];
         } else if (chainid == localChainId) {
@@ -66,11 +66,8 @@ contract HelperConfig is constansts, Script {
             return activeNetworkConfig;
         }
         //vm.startBroadcast();
-        VRFCoordinatorV2_5Mock mockVrfCoordinator = new VRFCoordinatorV2_5Mock(
-            BASE_FEE,
-            GAS_PRICE_LINK,
-            WEI_PER_UNIT_LINK
-        );
+        VRFCoordinatorV2_5Mock mockVrfCoordinator =
+            new VRFCoordinatorV2_5Mock(BASE_FEE, GAS_PRICE_LINK, WEI_PER_UNIT_LINK);
         LinkToken linkToken = new LinkToken();
         //vm.stopBroadcast();
 
